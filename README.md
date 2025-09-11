@@ -351,3 +351,85 @@ File: report.txt | Last Modified: <timestamp>
   All container sizes, capacities, and indices use `size_t` (an unsigned type guaranteed to hold any container size), which prevents negative values and matches standard library conventions. All timestamps use `time_t`, which is the standard type for time values in C/C++. This improves type safety, prevents subtle bugs, and ensures portability across platforms, compared to using `int`.
 
 ---
+
+## Implementation details
+
+### File (file.h / file.cpp)
+**Member Variables:**
+- `std::string name` — filename for identification/output
+- `TreeNode* root` — root version node
+- `TreeNode* active_version` — current version
+- `HashMap<int, TreeNode*> version_map` — version lookup
+- `int total_versions` — version counter
+- `time_t last_modified` — last modification time
+- `size_t update_counter` — RECENT_FILES tie-breaker
+
+**Key Methods:**
+- `insert(const std::string&)` — append content
+- `update(const std::string&)` — replace content
+- `snapshot(const std::string&)` — create snapshot
+- `rollback()` / `rollback(int)` — revert version
+- `history()` — print snapshot history
+- `read()` — get current content
+- `getName() const` — get filename
+- `getLastModified() const` — get last mod time
+- `getTreeSize() const` — get version count
+- `getActiveVersionID() const` — get current version id
+- `setUpdateCounter(size_t)` / `getUpdateCounter() const` — set/get update counter
+- Destructor — cleanup memory
+
+### TreeNode (tree.h / tree.cpp)
+**Member Variables:**
+- `int version_id` — version number
+- `std::string content` — node content
+- `std::string message` — snapshot message
+- `time_t created_timestamp` — creation time
+- `time_t snapshot_timestamp` — snapshot time
+- `TreeNode* parent` — parent node
+- `std::vector<TreeNode*> children` — child nodes
+
+**Key Methods:**
+- `getContent() const` — get content
+- `addChild(TreeNode*)` — add child node
+- `isSnapshot() const` — is snapshot?
+- `setContent(const std::string&)` — set content
+- `setSnapshot(bool)` — set snapshot flag
+- `setMessage(const std::string&)` — set message
+- `setSnapshotTimestamp(time_t)` — set snap time
+- `getVersionID() const` — get version id
+- `getParent() const` — get parent node
+- `getMessage() const` — get message
+- `getSnapshotTimestamp() const` — get snap time
+
+### HashMap (map.h / map.cpp)
+**Member Variables:**
+- `std::vector<HashNode<K,V>*> table` — hash buckets
+- `size_t capacity` — table size
+- `size_t size` — entry count
+- `float load_factor` — resize threshold
+
+**Key Methods:**
+- `insert(const K&, const V&)` — add entry
+- `get(const K&) const` — get value
+- `remove(const K&)` — delete entry
+- `contains(const K&) const` — has key?
+- `rehash()` — resize table
+- `getSize() const` / `get_size() const` — entry count
+- `begin()` / `end()` — iterators
+- `hash(const K&) const` — hash function
+
+### Heap (heap.h)
+**Member Variables:**
+- `std::vector<std::pair<Priority,Value>> elements` — heap array
+- `HashMap<Value, int>& index_map` — value indices
+
+**Key Methods:**
+- `insert(Value, Priority)` — add element
+- `extract()` — remove max
+- `updateval(size_t, Priority)` — update priority
+- `isEmpty() const` — is heap empty?
+- `get(size_t)` — get priority
+- `siftUp(size_t)` / `siftDown(size_t)` — heapify
+- `printall() const` — print heap
+
+---
