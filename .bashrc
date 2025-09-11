@@ -1,10 +1,9 @@
 #!/bin/bash
 # build and run script for the project
 
-g++ -std=c++17 -Wall -Wextra -o tfs.exe *.cpp
-if [ $? -eq 0 ]; then
+g++ -std=c++17 -Wall -Wextra -o gitvc.exe main.cpp file.cpp tree.cpp map.cpp 
     echo "Build successful. Running program..."
-    ./tfs.exe
+    ./gitvc.exe
 else
     echo "Build failed."
 fi
