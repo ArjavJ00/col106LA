@@ -6,12 +6,11 @@
 #include <iostream>
 #include <cctype>
 #include <cassert>
+#include <utility>
 #include "heap.h"
 
 HashMap<File*, int> fileTorecentFilesIdx;
 HashMap<File*, int> fileToBiggestTreeIdx;
-// Use pair<time_t, size_t> for RECENT_FILES priority
-#include <utility>
 Heap<std::pair<time_t, size_t>, File*> recentFilesHeap(fileTorecentFilesIdx);
 Heap<int, File*> BiggestTreesHeap(fileToBiggestTreeIdx);
 
@@ -28,7 +27,6 @@ bool isInteger(const std::string& s) {
     return true;
 }
 void updateRecentFilesHeap(File* file) {
-    // Set/update the file's update_counter
     file->setUpdateCounter(++global_update_counter);
     std::pair<time_t, size_t> priority = {file->getLastModified(), file->getUpdateCounter()};
     if (fileTorecentFilesIdx.contains(file)) {
@@ -57,6 +55,7 @@ int main(){
     HashMap<std::string, File*> fileMap;
     std::vector<File*> temp_Files;
     int total_files = 0;
+    std::cout << "Welcome to the File Versioning System. Enter commands (type EXIT to quit):" << std::endl;
     while (true){
         std::cout << "> ";
         std::string line;
@@ -74,7 +73,6 @@ int main(){
             break;
         }
         else if (cmd == "CURRENT"){
-            // print version ID of active_version of filename
             if (args.size() < 2 || args[1].empty()){
                 std::cout << "Error: No filename specified." << std::endl;
                 continue;
@@ -191,7 +189,6 @@ int main(){
             }
             else {
                 int version_id;
-                // make try catch blocks, rollback could throw strings
                 if (isInteger(args[2])) {
                     version_id = std::stoi(args[2]);
                     try {
