@@ -414,7 +414,7 @@ File: report.txt | Last Modified: <timestamp>
 - `remove(const K&)` — delete entry
 - `contains(const K&) const` — has key?
 - `rehash()` — resize table
-- `getSize() const` / `get_size() const` — entry count
+- `getSize() const` — entry count
 - `begin()` / `end()` — iterators
 - `hash(const K&) const` — hash function
 

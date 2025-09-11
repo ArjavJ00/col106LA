@@ -109,7 +109,6 @@ public:
             current = current->next;
         }
     }
-    size_t get_size() const { return size; }
     bool contains(const K& key) const {
         size_t index = hash(key);
         HashNode<K, V>* current = table[index];
