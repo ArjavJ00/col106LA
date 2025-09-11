@@ -8,25 +8,25 @@
 //#include "map.h"
 //#include "file.h"
 #include <tuple>
-template<typename V, typename K>
+template<typename Priority, typename Value>
 class Heap{
-    std::vector<std::pair<V, K>> elements;
-    HashMap<K, int>& index_map; 
+    std::vector<std::pair<Priority, Value>> elements;
+    HashMap<Value, int>& index_map; 
 public:
-    Heap(HashMap<K, int>& index_map) : index_map(index_map) {}
-    void insert(K value, V priority) {
+    Heap(HashMap<Value, int>& index_map) : index_map(index_map) {}
+    void insert(Value value, Priority priority) {
         elements.push_back({priority, value});
         size_t idx = siftUp(elements.size() - 1);
         index_map.insert(value, static_cast<int>(idx));
     }
-    void updateval(size_t idx, V newval) {
+    void updateval(size_t idx, Priority newval) {
         if (idx >= elements.size()) return;
         elements[idx].first = newval;
         size_t nidx = siftUp(idx);
         index_map.insert(elements[nidx].second, static_cast<int>(nidx));
     }
-    std::pair<V,K> extract() {
-        std::pair<V,K> root = elements[0];
+    std::pair<Priority,Value> extract() {
+        std::pair<Priority,Value> root = elements[0];
         elements[0] = elements.back();
         elements.pop_back();
         index_map.remove(root.second);
@@ -40,8 +40,8 @@ public:
         return elements.empty();
     }
     // Custom comparator for pair<time_t, size_t> for RECENT_FILES
-    bool isGreater(const std::pair<V, K>& a, const std::pair<V, K>& b) const {
-        if constexpr (std::is_same<V, std::pair<time_t, size_t>>::value && std::is_pointer<K>::value) {
+    bool isGreater(const std::pair<Priority, Value>& a, const std::pair<Priority, Value>& b) const {
+        if constexpr (std::is_same<Priority, std::pair<time_t, size_t>>::value && std::is_pointer<Value>::value) {
             if (a.first.first > b.first.first) return true;
             if (a.first.first < b.first.first) return false;
             // Tie-breaker: larger update_counter wins
@@ -49,7 +49,7 @@ public:
             if (a.first.second < b.first.second) return false;
             // Final tie-breaker: lex order of filename
             return a.second->getName() < b.second->getName();
-        } else if constexpr (std::is_same<V, int>::value && std::is_pointer<K>::value) {
+        } else if constexpr (std::is_same<Priority, int>::value && std::is_pointer<Value>::value) {
             if (a.first > b.first) return true;
             if (a.first < b.first) return false;
             return a.second->getName() < b.second->getName();
@@ -103,8 +103,8 @@ public:
             std::cout << "Value: " << element.second << ", Priority: " << element.first << std::endl;
         }
     }
-    V get(size_t idx){
-        if (idx >= elements.size()) return K();
+    Priority get(size_t idx){
+        if (idx >= elements.size()) return Value();
         return elements[idx].first;
     }
 };

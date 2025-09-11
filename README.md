@@ -1,4 +1,4 @@
-# Simplified Git-like Version Control : README
+# Simplified Git Version Control : README
 
 **Project:** Simplified in-memory Git-like version control
 
@@ -53,48 +53,111 @@ Below are the most important user-facing commands, each mapped to where it is ha
 ### CREATE <filename>
 - **Where:** `main.cpp` (command parsing), calls `File` constructor
 - **How:** Checks if the file already exists in the global map. If not, creates a new `File` object, which initializes the version tree with a root node (version 0, empty content, message "Root Snapshot"). Adds the new file to the global map and analytics heaps.
+- **Success:**
+  - `File created successfully: <filename>`
+- **Errors:**
+  - `Error: File already exists: <filename>`
+  - `Error: No filename specified.`
+  - `Error: Too many arguments for CREATE command.`
 
 ### INSERT <filename> <content...>
 - **Where:** `main.cpp` (command parsing), calls `File::insert`
-- **How:** Validates arguments, then calls the `insert` method of the corresponding `File` object. `File::insert` appends the new content to the current version's content, always on a new line. Updates the file's last modified time and analytics heaps. Prints a success or error message.
+- **How:** Validates arguments, then calls the `insert` method of the corresponding `File` object. `File::insert` appends the new content to the current version's content, always on a new line. Updates the file's last modified time and analytics heaps.
+- **Success:**
+  - If file is a snapshot : `Success creating new version and inserting content in File: <filename>` 
+  - Otherwise: `Success Inserting into File: <filename>`
+- **Errors:**
+  - `Error: Insufficient arguments for INSERT command.`
+  - `Error: File not found: <filename>`
 
 ### UPDATE <filename> <content...>
 - **Where:** `main.cpp` (command parsing), calls `File::update`
-- **How:** Validates arguments, then calls the `update` method of the `File` object. `File::update` replaces the content of the current version node with the new content (does not create a new version). Updates last modified time and analytics heaps. Prints a success or error message.
+- **How:** Validates arguments, then calls the `update` method of the `File` object. `File::update` replaces the content of the current version node with the new content (does not create a new version). Updates last modified time and analytics heaps.
+- **Success:**
+  - If file is a snapshot : `Success creating new version and updating content in File: <filename>` 
+  - Otherwise: `Success Updating into File: <filename>`
+- **Errors:**
+  - `Error: Insufficient arguments for UPDATE command.`
+  - `Error: File not found: <filename>`
 
 ### SNAPSHOT <filename> <message...>
 - **Where:** `main.cpp` (command parsing), calls `File::snapshot`
 - **How:** Calls the `snapshot` method of the `File` object, which creates a new `TreeNode` as a child of the current version, copies the current content, assigns a new version ID, sets the snapshot flag and message, and updates timestamps. The new node becomes the active version. Updates analytics heaps.
+- **Success:**
+  - `Success Creating Snapshot for File: <filename>`
+- **Errors:**
+  - `Error: Insufficient arguments for SNAPSHOT command.`
+  - `Error: File not found: <filename>`
+  - `Error: Cannot create snapshot of a snapshot`
 
 ### ROLLBACK <filename> [versionID]
 - **Where:** `main.cpp` (command parsing), calls `File::rollback`
-- **How:** If a version ID is provided, attempts to set the active version to the specified snapshot. If not, rolls back to the most recent snapshot. Validates the version exists and is a snapshot. Updates last modified time and analytics heaps. Prints a success or error message.
+- **How:** If a version ID is provided, attempts to set the active version to the specified snapshot. If not, rolls back to the most recent snapshot. Validates the version exists and is a snapshot. Updates last modified time and analytics heaps.
+- **Success:**
+  - `Success Rolling Back File: <filename>`
+- **Errors:**
+  - `Error: No filename specified.`
+  - `Error: File not found: <filename>`
+  - `Error: Too many arguments for ROLLBACK command.`
+  - `Error: Invalid version ID format.`
+  - `Error: Invalid version ID`
+  - `Error: Version ID out of range`
+  - `Error: Version ID not found`
+  - `Error: No parent version to rollback to`
 
 ### HISTORY <filename>
 - **Where:** `main.cpp` (command parsing), calls `File::history`
 - **How:** Calls the `history` method of the `File` object, which traverses the version tree from root to current, printing version IDs, messages, and timestamps for each snapshot.
+- **Output:**
+  - `[Ver: <id>] [Msg: <message>] Time: <timestamp>` (one per snapshot)
+- **Errors:**
+  - `Error: No filename specified.`
+  - `Error: File not found: <filename>`
+  - `Error: Too many arguments for HISTORY command.`
 
 ### READ <filename>
 - **Where:** `main.cpp` (command parsing), calls `File::read`
 - **How:** Calls the `read` method of the `File` object, which prints the content of the current (active) version node.
+- **Output:**
+  - `<file content>`
+  - `Success Reading File: <filename>`
+- **Errors:**
+  - `Error: No filename specified.`
+  - `Error: File not found: <filename>`
+  - `Error: Too many arguments for READ command.`
 
 ### CURRENT <filename>
 - **Where:** `main.cpp` (command parsing), calls `File::getActiveVersionID`
 - **How:** Prints the version ID of the current (active) version node.
+- **Output:**
+  - `Current version ID of <filename>: <id>`
+- **Errors:**
+  - `Error: No filename specified.`
+  - `Error: File not found: <filename>`
 
 ### RECENT_FILES [num]
 - **Where:** `main.cpp` (command parsing), uses `recentFilesHeap`
 - **How:** Pops up to `num` files from the max-heap of files sorted by last modified time, printing their names and timestamps.
+- **Output:**
+  - `File: <filename> | Last Modified: <timestamp>` (one per file)
+- **Errors:**
+  - `Error: Too many arguments for RECENT_FILES command.`
+  - `Error: Invalid number format.`
+  - `Error: Number exceeds total files.`
 
 ### BIGGEST_TREES [num]
 - **Where:** `main.cpp` (command parsing), uses `BiggestTreesHeap`
 - **How:** Pops up to `num` files from the max-heap of files sorted by version tree size, printing their names and sizes.
+- **Output:**
+  - `File: <filename> | Tree Size: <size>` (one per file)
+- **Errors:**
+  - `Error: Too many arguments for BIGGEST_TREES command.`
+  - `Error: Invalid number format.`
+  - `Error: Number exceeds total files.`
 
 ### EXIT
 - **Where:** `main.cpp` (command parsing)
 - **How:** Exits the program cleanly, deleting all allocated objects.
-
-All commands provide clear feedback, and invalid usage is met with descriptive error messages.
 
 ---
 
@@ -105,7 +168,6 @@ All commands provide clear feedback, and invalid usage is met with descriptive e
 - `tree.h` / `tree.cpp` — `TreeNode` class: header contains declarations, source contains definitions. Node used by `File` representing one version (content, parent, children, timestamps, message, snapshot flag, id).
 - `map.h` / `map.cpp` — Template `HashMap<K,V>`: header contains declarations, source contains definitions and specializations. Separate-chaining hash table with rehashing. The template relies on `hash` specializations for key types used in this code.
 - `heap.h` — Template `Heap<V,K>`: max-heap priority queue with an external index map (a `HashMap<K,int>`) for O(log n) updates. (Template implementation remains in header for portability.)
-- `COL_106_Long_Assignment_1.pdf` — Original assignment PDF (for reference).
 
 ---
 
@@ -118,17 +180,17 @@ From the project directory:
 ```powershell
 # Compile all source files
 # (This will automatically pick up all .cpp files, including main.cpp, file.cpp, tree.cpp, map.cpp, heap.cpp)
-g++ -std=c++17 -Wall -Wextra -o tfs.exe *.cpp
+g++ -std=c++17 -Wall -Wextra -o gitvc.exe *.cpp
 
 # Run
-./tfs.exe
+./gitvc.exe
 ```
 
 Alternatively create a small script `build.ps1` (for PowerShell):
 
 ```powershell
 # build.ps1
-g++ -std=c++17 -Wall -Wextra -o tfs.exe *.cpp
+g++ -std=c++17 -Wall -Wextra -o gitvc.exe *.cpp
 if ($?) { Write-Host "Build successful" }
 ```
 
@@ -249,11 +311,11 @@ File: report.txt | Last Modified: <timestamp>
 
 ## Design decisions
 
-- **Header/source file split for maintainability and clarity**
-  All classes and functions are split into `.h` (declarations) and `.cpp` (definitions) files. This modular approach improves code readability, maintainability, and build efficiency, and is a best practice in C++ development.
+- **Modular, maintainable, and safe design**
+  All classes and functions are split into `.h` (declarations) and `.cpp` (definitions) files. Classes use private members with getters/setters, and each class has a focused, single responsibility. This modular approach improves code readability, maintainability, and build efficiency, and is a best practice in C++ development.
 
-- **Encapsulation: private member variables + getters/setters**
-  Class member variables are declared `private` and accessed or modified only via getter/setter methods. This prevents accidental or out-of-order modifications to internal state, centralizes validation logic, and makes invariants easier to reason about and maintain.
+- **Efficient, always-up-to-date analytics**
+  The heap uses an external index map for O(log n) updates and is updated continuously whenever a file's metadata or tree size changes (after every insert, update, etc.), not just when analytics are called. This ensures that analytics queries like `RECENT_FILES` and `BIGGEST_TREES` always run in O(num * log n) time, where num is the number of results requested.
 
 - **Explicit success / failure messages for every command**
   Every command prints a clear success or error message (for example, `Success Inserting into File: notes.txt` or a descriptive validation error). Exceptions thrown by `File` methods are caught in `main.cpp` and displayed to the user.
@@ -264,9 +326,6 @@ File: report.txt | Last Modified: <timestamp>
 - **Custom HashMap design (separate chaining + rehashing)**
   `HashMap` uses separate chaining with linked lists inside buckets and doubles capacity when load factor crosses a threshold.
 
-- **External index map in `Heap` for efficient updates**
-  The heap stores `(priority, value)` pairs in a vector and relies on an external `HashMap<value,int>` to track indices, enabling `updateval` operations in O(log n).
-
 - **Timestamps and lightweight analytics**
   Each `File` and each snapshot stores timestamps. Program-level heaps (`recentFilesHeap`, `BiggestTreesHeap`) use these timestamps and sizes to provide quick analytics without traversing all files for every query.
 
@@ -276,73 +335,19 @@ File: report.txt | Last Modified: <timestamp>
 - **Defensive input validation and error propagation**
   `main.cpp` validates command arguments and converts textual inputs (for example, version IDs) safely. Where `File` methods may throw exceptions (`const char*`), the top-level catches and prints them.
 
-- **Single-responsibility and modular code layout**
-  Each class has a focused responsibility: `TreeNode` models a version node, `File` manages a version tree and file-specific logic, `HashMap` and `Heap` provide supporting data structures, and `main.cpp` handles CLI and orchestration.
-
 - **INSERT appends content on a new line**
-  INSERT always appends new content on a separate line (implementation prepends "\n"), but only if the file is not empty; if the file is empty, the content is added directly without a leading newline. This avoids unnecessary blank lines at the start of a file.
+  `INSERT` always appends new content on a separate line (implementation prepends "\n"), but only if the file is not empty; if the file is empty, the content is added directly without a leading newline. This avoids unnecessary blank lines at the start of a file.
 
-- **RECENT_FILES time complexity**
-  `RECENT_FILES [num]` executes in `O(num * log n)` time (with num < n validated) by popping the top num elements from the max-heap of n files.
-
-- **heap update helpers in main.cpp**
-  `updateRecentFilesHeap`, `updateBiggestTreesHeap`, and `updateeval` centralize and encapsulate the logic for updating analytics heaps and their index maps whenever a file's metadata or tree size changes.
 - **BIGGEST_TREES tie-breaker:**
-If two files have the same tree size, the file with the lexicographically smaller filename (alphabetical order) is ranked higher in `BIGGEST_TREES`. This is enforced in the heap logic.  
+  If two files have the same tree size, the file with the lexicographically smaller filename (alphabetical order) is ranked higher in `BIGGEST_TREES`. This is enforced in the heap logic.  
+
+- **RECENT_FILES always reflects true recency, even for simultaneous updates**
+  If two files are updated in the same second, the system guarantees that the file updated later is always considered more recent in RECENT_FILES. This ensures analytics are robust and unambiguous.
 
 - **Commands are case-insensitive (Git-style)**
   All commands are recognized regardless of letter case (e.g., `create`, `CREATE`, `CrEaTe` all work). This is implemented by converting input to uppercase before matching. This approach is more user-friendly, reduces user errors, and is consistent with the behavior of popular tools like Git. **Filenames, however, remain case-sensitive.**
 
 - **Use of size_t and time_t for safety and portability**
   All container sizes, capacities, and indices use `size_t` (an unsigned type guaranteed to hold any container size), which prevents negative values and matches standard library conventions. All timestamps use `time_t`, which is the standard type for time values in C/C++. This improves type safety, prevents subtle bugs, and ensures portability across platforms, compared to using `int`.
-
-- **RECENT_FILES always reflects true recency, even for simultaneous updates**
-  If two files are updated in the same second, the system guarantees that the file updated later is always considered more recent in RECENT_FILES. This ensures analytics are robust and unambiguous.
----
-
-## Implementation details
-
-### File (file.h / file.cpp)
-**Variables:**
-- `std::string name` — filename for identification and output
-- `TreeNode* root` — root version node
-- `TreeNode* active_version` — current version
-- `HashMap<int, TreeNode*> version_map` — version lookup
-- `int total_versions` — version counter
-- `time_t last_modified` — last modification time
-
-**Methods:**
-- `insert`, `update`, `snapshot`, `rollback`, `history`, `read`, `getName`, `getLastModified`, `getTreeSize`, `getActiveVersionID`, destructor
-
-### TreeNode (tree.h / tree.cpp)
-**Variables:**
-- `int version_id`
-- `std::string content`
-- `std::string message`
-- `time_t created_timestamp`
-- `time_t snapshot_timestamp`
-- `TreeNode* parent`
-- `std::vector<TreeNode*> children`
-
-**Methods:**
-- `getContent`, `addChild`, `isSnapshot`, `setContent`, `setSnapshot`, `setMessage`, `setSnapshotTimestamp`, `getVersionID`, `getParent`, `getMessage`, `getSnapshotTimestamp`
-
-### HashMap (map.h / map.cpp)
-**Variables:**
-- `std::vector<HashNode<K,V>*> table`
-- `size_t capacity`
-- `size_t size`
-- `float load_factor`
-
-**Methods:**
-- `insert`, `get`, `remove`, `contains`, `rehash`, `getSize`, `get_size`, `begin`, `end`, `hash` (with specializations)
-
-### Heap (heap.h)
-**Variables:**
-- `std::vector<std::pair<V,K>> elements`
-- `HashMap<K,int>& index_map`
-
-**Methods:**
-- `insert`, `extract`, `updateval`, `isEmpty`, `get`, `siftUp`, `siftDown`, `printall`
 
 ---
